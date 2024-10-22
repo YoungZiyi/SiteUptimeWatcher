@@ -3,47 +3,19 @@ run-name: ${{ github.actor }} is building ${{ github.repository }}
 permissions:
     id-token: write
     contents: read
-env:
-    AWS_REGION: us-east-1
-    IMAGE_TAG: ${{ github.sha }}
-    AWS_ACCOUNT: 339713007259
 on: [push]
 jobs:
-  build:
+  Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - name: Get repo
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
         uses: actions/checkout@v4
-
-      - name: Prepare QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Build Docker image
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
         run: |
-            docker buildx create --name arm64-builder --use
-            docker buildx build --platform linux/arm64 --load -t watcher:${{ env.IMAGE_TAG }} .
-
-      - name: Run pytest
-        run: docker run watcher:${{ env.IMAGE_TAG }} pytest ./test -v
-
-      - name: Run pylint
-        run: docker run watcher:${{ env.IMAGE_TAG }} pylint ./src
-
-      - name: Configure aws credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          role-to-assume: arn:aws:iam::339713007259:role/github-action
-          role-session-name: github
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Push Docker image
-        run: |
-            aws ecr get-login-password --region ${{env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{env.AWS_REGION }}.amazonaws.com
-            docker tag watcher:${{ env.IMAGE_TAG }} ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{env.AWS_REGION }}.amazonaws.com/watcher:${{ env.IMAGE_TAG }}
-            docker tag watcher:${{ env.IMAGE_TAG }} ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{env.AWS_REGION }}.amazonaws.com/watcher:latest
-            docker push ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{env.AWS_REGION }}.amazonaws.com/watcher:${{ env.IMAGE_TAG }}
-            docker push ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{env.AWS_REGION }}.amazonaws.com/watcher:latest
-
-      - name: Push secrets
-        run: |
-            aws secretsmanager put-secret-value --secret-id "/watcher/postgre/password" --secret-string ${{ secrets.DB_PASSWORD }} --region ${{env.AWS_REGION }}
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."
